@@ -1,0 +1,41 @@
+﻿# Python-specific
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+venv/
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# API Keys and sensitive information
+.env
+credentials.json
+token.json
+
+# Logs
+logs/
+*.log
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.idea/
+.vscode/
+*.swp
+*.swo
