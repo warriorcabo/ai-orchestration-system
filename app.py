@@ -1,11 +1,11 @@
-﻿import os
+import os
 from flask import Flask
 
 app = Flask(__name__)
 
 @app.route('/')
-def hello():
-    return 'AI Orchestration Dashboard is running!'
+def index():
+    return 'AI Orchestration System Dashboard'
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
