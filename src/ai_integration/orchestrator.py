@@ -3,6 +3,7 @@
 import logging
 import time
 import uuid
+import json
 from typing import Dict, Any, Optional
 
 # Import the connectors
@@ -12,6 +13,7 @@ from .connectors.chatgpt_connector import ChatGPTConnector
 # Import utility modules
 from src.utils.error_handler import log_error
 from src.utils.feedback_loop_manager import FeedbackLoopManager
+from src.utils.google_drive_storage import GoogleDriveStorage
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,7 @@ class AIOrchestrator:
         self.gemini = GeminiConnector()
         self.chatgpt = ChatGPTConnector()
         self.feedback_manager = FeedbackLoopManager()
+        self.storage = GoogleDriveStorage()
         
         # User session storage
         self.user_sessions = {}
@@ -84,6 +87,9 @@ class AIOrchestrator:
                     revision_function=self._revise_output
                 )
             
+            # Step 4: Save to storage
+            storage_result = self._save_to_storage(message, final_result, user_id, conversation_id)
+            
             # Track the process in our records
             self._track_interaction(user_id, message, final_result)
             
@@ -95,7 +101,8 @@ class AIOrchestrator:
                 "processed_by": "AI Orchestrator",
                 "status": "complete",
                 "feedback_cycle_count": len(feedback_history.get("revisions", [])),
-                "conversation_id": conversation_id
+                "conversation_id": conversation_id,
+                "storage_reference": storage_result
             }
             
         except Exception as e:
@@ -191,6 +198,34 @@ class AIOrchestrator:
             logger.error(f"Error revising output: {str(e)}")
             log_error("ai_orchestrator", f"Revision error: {str(e)}")
             return original_output  # Return original in case of error
+    
+    def _save_to_storage(self, query: str, response: str, user_id: str, conversation_id: str) -> str:
+        """Save the query and response to storage."""
+        logger.info(f"Saving results to storage for conversation {conversation_id}")
+        try:
+            # Create a structured record
+            record = {
+                "conversation_id": conversation_id,
+                "user_id": user_id,
+                "timestamp": time.time(),
+                "query": query,
+                "response": response
+            }
+            
+            # Convert to JSON
+            json_content = json.dumps(record, indent=2)
+            
+            # Save to Google Drive (with fallback to local storage)
+            return self.storage.save_ai_output(
+                content=json_content,
+                user_id=user_id,
+                query_type="conversation",
+                format_type="json"
+            )
+        except Exception as e:
+            logger.error(f"Error saving to storage: {str(e)}")
+            log_error("ai_orchestrator", f"Storage error: {str(e)}")
+            return "storage_error"
     
     def _track_interaction(self, user_id: str, input_message: str, output_result: str) -> None:
         """Track the interaction for feedback loop analysis."""
