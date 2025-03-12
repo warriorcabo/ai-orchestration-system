@@ -1,110 +1,80 @@
-﻿# app.py - Main application entry point
+﻿from flask import Flask, request, jsonify
 import os
-import sys
 import logging
-import json
-from flask import Flask, request, jsonify
+from src.ai_integration.orchestrator import AIOrchestrator
 
-# Configure detailed logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Import the AI Orchestrator
-try:
-    from src.ai_integration.ai_orchestrator import AIOrchestrator
-    # Create an instance of the AI Orchestrator
-    orchestrator = AIOrchestrator()
-    logger.info("AI Orchestrator loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load AI Orchestrator: {str(e)}")
-    orchestrator = None
 
 # Initialize Flask app
 app = Flask(__name__)
 
+# Initialize AI Orchestrator
+orchestrator = AIOrchestrator()
+
 @app.route('/')
 def index():
-    """Main application page"""
-    logger.info("Index page accessed")
-    return "AI Orchestration System Dashboard"
+    return "AI Orchestration System is running!"
 
-@app.route('/debug', methods=['GET'])
-def debug_info():
-    """Debug endpoint to retrieve environment information"""
-    logger.info("Debug endpoint accessed")
-    
-    # Show if orchestrator is initialized
-    orchestrator_status = "Initialized" if orchestrator else "Not initialized"
-    
-    # Collect environment information
-    debug_data = {
-        "ENV": os.environ.get('DYNO', 'No dyno'),
-        "ORCHESTRATOR": orchestrator_status
-    }
-    
-    return jsonify(debug_data)
+@app.route('/debug')
+def debug():
+    """Simple debug endpoint to verify the app is running correctly."""
+    return jsonify({
+        "status": "online",
+        "message": "Debug endpoint is working correctly",
+        "environment": os.environ.get('FLASK_ENV', 'production')
+    })
 
 @app.route('/api/process', methods=['POST'])
-def process_message():
-    """Process a message through the AI Orchestrator"""
+def process_request():
+    """
+    Process incoming requests through the AI Orchestrator.
+    
+    Expected JSON payload:
+    {
+        "user_id": "string",
+        "message": "string"
+    }
+    """
     try:
+        # Get and validate request data
         data = request.get_json()
-        
         if not data:
-            return jsonify({"error": "No data provided"}), 400
-            
-        user_id = data.get('user_id', 'anonymous')
-        message = data.get('message')
+            return jsonify({"error": "No JSON payload provided"}), 400
         
-        if not message:
-            return jsonify({"error": "No message provided"}), 400
-            
-        if not orchestrator:
-            return jsonify({"error": "AI Orchestrator not initialized"}), 500
-            
-        # Process the message through the orchestrator
-        response = orchestrator.process_message(user_id, message)
+        # Validate required fields
+        required_fields = ['user_id', 'message']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
         
+        # Log the incoming request
+        logger.info(f"Processing request for user: {data['user_id']}")
+        
+        # Process the request through the orchestrator
+        result = orchestrator.process_request(
+            user_id=data['user_id'],
+            message=data['message']
+        )
+        
+        # Return the result
         return jsonify({
-            "user_id": user_id,
-            "response": response
+            "status": "success",
+            "response": result
         })
         
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/telegram_webhook/<token>', methods=['POST'])
-def telegram_webhook(token):
-    """Webhook for Telegram bot integration"""
-    logger.info(f"Telegram webhook accessed with token: {token[:4]}...")
-    
-    try:
-        update = request.get_json()
-        logger.info(f"Received update: {json.dumps(update)}")
+        # Log the error
+        logger.error(f"Error processing request: {str(e)}")
         
-        # For now, just acknowledge receipt
-        return jsonify({"status": "received"})
-    
-    except Exception as e:
-        logger.error(f"Error processing webhook: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Global exception handler for the Flask app"""
-    logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
-    return jsonify({"status": "error", "message": "Internal server error"}), 500
+        # Return an error response
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to process request: {str(e)}"
+        }), 500
 
 if __name__ == "__main__":
-    # Get port from environment (required for Heroku)
+    # Get port from environment variable or use default
     port = int(os.environ.get("PORT", 5000))
-    
-    logger.info(f"Starting AI Orchestration System on port {port}")
-    
-    # Start Flask app
     app.run(host="0.0.0.0", port=port)
