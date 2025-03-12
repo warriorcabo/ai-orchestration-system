@@ -70,14 +70,19 @@ class AIOrchestrator:
             # Extract the content from execution result
             content = execution_result.get("content", "No content provided")
             
-            # Step 3: Use feedback loop to improve if needed
-            final_result, feedback_history = self.feedback_manager.process_feedback_loop(
-                conversation_id=conversation_id,
-                user_query=message,
-                initial_response=content,
-                review_function=self._review_result,
-                revision_function=self._revise_output
-            )
+            # For simple queries, skip the feedback loop for efficiency
+            if len(message.split()) < 5 or "hello" in message.lower():
+                final_result = content
+                feedback_history = {"revisions": []}
+            else:
+                # Step 3: Use feedback loop to improve if needed
+                final_result, feedback_history = self.feedback_manager.process_feedback_loop(
+                    conversation_id=conversation_id,
+                    user_query=message,
+                    initial_response=content,
+                    review_function=self._review_result,
+                    revision_function=self._revise_output
+                )
             
             # Track the process in our records
             self._track_interaction(user_id, message, final_result)
@@ -123,7 +128,16 @@ class AIOrchestrator:
                 logger.warning(f"Gemini API call failed (attempt {attempt+1}): {str(e)}")
                 if attempt == self.max_retries - 1:
                     log_error("ai_orchestrator", f"Gemini API call failed: {str(e)}")
-                    raise
+                    # Return a fallback task
+                    return {
+                        "task_type": "text_generation",
+                        "instructions": f"Process the following user request: {message}",
+                        "context": "Error occurred during task generation",
+                        "parameters": {
+                            "creativity": 0.5,
+                            "detail_level": "basic"
+                        }
+                    }
                 time.sleep(1)  # Wait before retrying
     
     def _execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -136,7 +150,16 @@ class AIOrchestrator:
                 logger.warning(f"ChatGPT API call failed (attempt {attempt+1}): {str(e)}")
                 if attempt == self.max_retries - 1:
                     log_error("ai_orchestrator", f"ChatGPT API call failed: {str(e)}")
-                    raise
+                    # Return a fallback response
+                    return {
+                        "content": f"I processed your request but encountered an issue. Here's what I understand: {task.get('instructions', '')}",
+                        "model": "fallback-model",
+                        "completion_tokens": 0,
+                        "metadata": {
+                            "task_type": task.get("task_type", "unknown"),
+                            "processing_time_ms": 0
+                        }
+                    }
                 time.sleep(1)  # Wait before retrying
     
     def _review_result(self, response: str, query: str) -> str:
@@ -155,23 +178,10 @@ class AIOrchestrator:
         """Revise output based on feedback."""
         logger.info("Revising output based on feedback")
         try:
-            # Create a task for revision
+            # Create a simplified task for revision to prevent cascading feedback loops
             revision_task = {
                 "task_type": "revision",
-                "instructions": f"""
-                Please revise the following output based on this feedback:
-                
-                ORIGINAL OUTPUT:
-                {original_output}
-                
-                FEEDBACK:
-                {feedback}
-                
-                ORIGINAL QUERY:
-                {query}
-                
-                Provide a complete revised version that addresses all feedback.
-                """
+                "instructions": f"Original query: {query}\n\nFeedback: {feedback}\n\nPlease improve this response."
             }
             
             # Execute the revision task
