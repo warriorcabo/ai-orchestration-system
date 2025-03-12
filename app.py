@@ -2,7 +2,13 @@
 import os
 import logging
 import time
-import json
+import threading
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Import modules
 from src.ai_integration.orchestrator import AIOrchestrator
 from src.utils.error_handler import log_error
 
@@ -15,6 +21,29 @@ app = Flask(__name__)
 
 # Initialize AI Orchestrator
 orchestrator = AIOrchestrator()
+
+# Initialize Telegram Bot in a separate thread if token is available
+telegram_token = os.environ.get("TELEGRAM_TOKEN", "8183769729:AAEXc0x1BizumecFeTVkEzQ75GjXesTKM24")
+webhook_url = os.environ.get("WEBHOOK_URL")
+
+def start_telegram_bot():
+    """Start the Telegram bot in a separate thread."""
+    try:
+        from src.telegram.telegram_bot import TelegramBotHandler
+        
+        logger.info("Starting Telegram Bot...")
+        bot = TelegramBotHandler(telegram_token, orchestrator)
+        bot.start(webhook_url)
+    except Exception as e:
+        logger.error(f"Failed to start Telegram Bot: {str(e)}")
+        log_error("telegram_startup", f"Failed to start Telegram Bot: {str(e)}")
+
+# Start Telegram bot in a separate thread if not running in webhook mode
+if not webhook_url:
+    bot_thread = threading.Thread(target=start_telegram_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+    logger.info("Telegram Bot thread started")
 
 @app.route('/')
 def index():
@@ -102,44 +131,49 @@ def health_check():
             "timestamp": time.time()
         }), 500
 
-@app.route('/api/stats', methods=['GET'])
-def get_stats():
-    """Get basic system statistics."""
-    try:
-        stats = {
-            "active_users": len(orchestrator.user_sessions) if hasattr(orchestrator, 'user_sessions') else 0,
-            "uptime": time.time() - app.start_time if hasattr(app, 'start_time') else 0,
-            "api_calls": {
-                "process_requests": app.request_count if hasattr(app, 'request_count') else 0
-            }
-        }
+@app.route('/webhook/<token>', methods=['POST'])
+def telegram_webhook(token):
+    """
+    Handle incoming webhook requests from Telegram.
+    
+    Args:
+        token: The Telegram bot token as a URL parameter for verification
+    """
+    if token != telegram_token:
+        return jsonify({"error": "Invalid token"}), 403
         
-        return jsonify(stats)
+    try:
+        from telegram import Update
+        from src.telegram.telegram_bot import TelegramBotHandler
+        
+        # Process the update
+        update = Update.de_json(request.get_json(force=True), None)
+        
+        # Initialize the bot handler on-demand
+        bot = TelegramBotHandler(telegram_token, orchestrator)
+        
+        # Dispatch the update to the appropriate handler
+        if update.message:
+            if update.message.text.startswith('/'):
+                # Command
+                command = update.message.text.split()[0].lower()
+                if command == '/start':
+                    bot.start_command(update, None)
+                elif command == '/help':
+                    bot.help_command(update, None)
+            else:
+                # Regular message
+                bot.handle_message(update, None)
+                
+        return jsonify({"status": "ok"})
+        
     except Exception as e:
-        logger.error(f"Failed to get stats: {str(e)}")
+        logger.error(f"Error processing webhook: {str(e)}")
+        log_error("telegram_webhook", f"Error processing webhook: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Track application start time and request count
-@app.before_first_request
-def before_first_request():
-    """Initialize counters before first request."""
-    app.start_time = time.time()
-    app.request_count = 0
-
-@app.before_request
-def before_request():
-    """Increment request counter before each request."""
-    if request.endpoint == 'process_request':
-        app.request_count = getattr(app, 'request_count', 0) + 1
-
-# Add environment variable handling
+# Run the app
 if __name__ == "__main__":
     # Get port from environment variable or use default
     port = int(os.environ.get("PORT", 5000))
-    
-    # Set start time
-    app.start_time = time.time()
-    app.request_count = 0
-    
-    # Start the Flask app
     app.run(host="0.0.0.0", port=port)
