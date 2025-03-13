@@ -10,7 +10,12 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
 
-from src.utils.error_handler import log_error
+try:
+    from src.utils.error_handler import log_error
+except ImportError:
+    # Fallback for direct execution
+    def log_error(module, message, **kwargs):
+        print(f"ERROR: {module} - {message}")
 
 # Configure logging
 logging.basicConfig(
@@ -32,45 +37,42 @@ class GoogleDriveStorage:
 
         # Get credentials
         try:
-            # First try to get JSON credentials from environment
-            credentials_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-            credentials_path = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
-            
-            if credentials_json:
-                # Parse JSON directly from environment variable
-                info = json.loads(credentials_json)
+            # Try direct file first (development and Heroku)
+            service_account_file = "flexmls-scraper-1c4b02856bed.json"
+            if os.path.exists(service_account_file):
+                # Read with BOM handling
+                with open(service_account_file, 'r', encoding='utf-8-sig') as f:
+                    credentials_data = json.load(f)
+                
                 self.credentials = service_account.Credentials.from_service_account_info(
-                    info,
+                    credentials_data,
                     scopes=['https://www.googleapis.com/auth/drive']
                 )
                 self.service = build('drive', 'v3', credentials=self.credentials)
                 self.is_available = True
-                logger.info("Google Drive initialized using credentials from environment")
-            elif os.path.exists(credentials_path):
-                # Fallback to credentials file
-                self.credentials = service_account.Credentials.from_service_account_file(
-                    credentials_path,
-                    scopes=['https://www.googleapis.com/auth/drive']
-                )
-                self.service = build('drive', 'v3', credentials=self.credentials)
-                self.is_available = True
-                logger.info("Google Drive initialized using credentials file")
+                logger.info("Google Drive initialized using credentials file directly")
             else:
-                # Fallback to API key authentication (read-only)
-                api_key = os.environ.get("GOOGLE_API_KEY")
-                if api_key:
-                    self.service = build('drive', 'v3', developerKey=api_key)
+                # Try environment variable (alternative approach)
+                credentials_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+                if credentials_json:
+                    # Parse JSON directly from environment variable
+                    info = json.loads(credentials_json)
+                    self.credentials = service_account.Credentials.from_service_account_info(
+                        info,
+                        scopes=['https://www.googleapis.com/auth/drive']
+                    )
+                    self.service = build('drive', 'v3', credentials=self.credentials)
                     self.is_available = True
-                    logger.info("Google Drive initialized using API key (read-only)")
+                    logger.info("Google Drive initialized using credentials from environment")
                 else:
-                    logger.warning("No Google Drive credentials or API key found")
+                    logger.warning("No Google Drive credentials found")
         except Exception as e:
             logger.error(f"Failed to initialize Google Drive service: {str(e)}")
             log_error("google_drive_storage", f"Init error: {str(e)}")
             self.is_available = False
     
     def upload_text_file(self, content: str, filename: str, folder_id: Optional[str] = None,
-                       mime_type: str = "text/plain") -> str:
+                        mime_type: str = "text/plain") -> str:
         """Upload a text file to Google Drive"""
         try:
             # Use specified folder or default to root folder
@@ -210,4 +212,3 @@ class GoogleDriveStorage:
             logger.error(f"Failed to create folder: {str(e)}")
             log_error("google_drive_storage", f"Folder creation error: {str(e)}")
             raise
-
