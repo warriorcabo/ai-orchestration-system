@@ -1,101 +1,102 @@
-﻿# src/ai_integration/connectors/chatgpt_connector.py
-
+﻿# Fix for ChatGPT connector
 import os
 import logging
-from typing import Dict, Any
+import openai
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ChatGPTConnector:
-    """
-    Connector for OpenAI's ChatGPT.
-    Handles communication with the ChatGPT API for task execution.
-    """
-    
+    """Connector for OpenAI's ChatGPT API"""
+
     def __init__(self):
-        """Initialize the ChatGPT connector."""
-        logger.info("Initializing ChatGPT Connector")
+        """Initialize the ChatGPT connector with API key"""
+        # Get API key from environment variables
         self.api_key = os.environ.get("OPENAI_API_KEY")
-        logger.info(f"API key found: {bool(self.api_key)}")
-        self.model = "gpt-4-turbo"
-    
-    def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute a structured task using ChatGPT.
-        
-        Args:
-            task: Dictionary containing the structured task information
+        if not self.api_key:
+            logger.warning("OpenAI API key not found in environment variables")
+            self.is_available = False
+            return
             
-        Returns:
-            Dict containing the execution result
-        """
-        logger.info("Executing task with ChatGPT")
+        # Set API key
+        openai.api_key = self.api_key
         
-        try:
-            # Try to import and use OpenAI if available
-            if self.api_key:
-                # Extract task information
-                task_type = task.get("task_type", "unknown")
-                instructions = task.get("instructions", "")
-                
-                try:
-                    # Try using the OpenAI library
-                    from openai import OpenAI
-                    client = OpenAI(api_key=self.api_key)
-                    
-                    # Create messages
-                    messages = [
-                        {"role": "system", "content": "You are a helpful assistant focused on executing tasks thoroughly."},
-                        {"role": "user", "content": instructions}
-                    ]
-                    
-                    # Call the API
-                    response = client.chat.completions.create(
-                        model=self.model,
-                        messages=messages,
-                        temperature=0.7,
-                        max_tokens=2048
-                    )
-                    
-                    # Get the content
-                    content = response.choices[0].message.content
-                    
-                    return {
-                        "content": content,
-                        "model": self.model,
-                        "completion_tokens": 0,
-                        "metadata": {
-                            "task_type": task_type,
-                            "processing_time_ms": 0
-                        }
-                    }
-                    
-                except Exception as e:
-                    logger.error(f"Error using OpenAI API: {str(e)}")
-                    # Fall back to mock response if API call fails
-                    return self._generate_mock_response(task)
-            else:
-                # No API key, use mock response
-                return self._generate_mock_response(task)
-                
-        except Exception as e:
-            logger.error(f"Error in ChatGPT connector: {str(e)}")
-            # Return mock response in case of error
-            return self._generate_mock_response(task)
-    
-    def _generate_mock_response(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a mock response when API is unavailable"""
-        task_type = task.get("task_type", "unknown")
-        instructions = task.get("instructions", "")
+        # Default model to use
+        self.model = "gpt-4-0125-preview"
         
-        content = f"This is a mock response to: {instructions}"
-        
-        return {
-            "content": content,
-            "model": "gpt-4-mock",
-            "completion_tokens": 150,
-            "metadata": {
-                "task_type": task_type,
-                "processing_time_ms": 1200
-            }
+        # Default parameters
+        self.default_params = {
+            "temperature": 0.7,
+            "max_tokens": 2048,
+            "top_p": 1.0,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
         }
+        
+        self.is_available = True
+        logger.info("ChatGPT connector initialized successfully")
+
+    def generate_response(self, prompt, system_message=None):
+        """Generate a response from ChatGPT based on the prompt"""
+        try:
+            if not self.is_available:
+                return "ChatGPT API not available"
+                
+            # Prepare messages
+            messages = []
+            
+            # Add system message if provided
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+            else:
+                # Default system message
+                messages.append({
+                    "role": "system", 
+                    "content": "You are a helpful AI assistant focused on executing tasks accurately and thoroughly."
+                })
+            
+            # Add user prompt
+            messages.append({"role": "user", "content": prompt})
+            
+            # Make API call
+            response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=messages,
+                **{k: v for k, v in self.default_params.items() if k != 'proxies'}
+            )
+            
+            # Extract and return the response text
+            if response.choices and len(response.choices) > 0:
+                return response.choices[0].message.content
+                
+            return "No response generated by ChatGPT"
+            
+        except Exception as e:
+            logger.error(f"Error using OpenAI API: {str(e)}")
+            return f"ChatGPT Error: {str(e)}"
+            
+    def execute_task(self, task_spec, original_query):
+        """Execute a specified task based on Gemini's task specification"""
+        try:
+            system_message = """
+            You are an AI assistant specialized in executing tasks with precision and attention to detail.
+            Your responses should be thorough, accurate, and directly address all aspects of the task.
+            Focus on providing high-quality, usable outputs following any formatting requirements specified.
+            """
+            
+            prompt = f"""
+            TASK SPECIFICATION:
+            {task_spec}
+            
+            ORIGINAL USER QUERY:
+            {original_query}
+            
+            Please execute this task completely and accurately.
+            Make sure to address all requirements and provide a comprehensive response.
+            """
+            
+            return self.generate_response(prompt, system_message)
+        except Exception as e:
+            logger.error(f"Error executing task with ChatGPT: {str(e)}")
+            return f"Task Execution Error: {str(e)}"
