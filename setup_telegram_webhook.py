@@ -16,14 +16,11 @@ logger = logging.getLogger(__name__)
 def setup_telegram_webhook():
     """Set up Telegram webhook for production"""
     telegram_token = os.environ.get("TELEGRAM_TOKEN")
-    app_url = os.environ.get("WEBHOOK_URL")
+    # Use hardcoded URL for now
+    app_url = "https://ai-orch-warrior-5ff152a0e1f8.herokuapp.com"
     
     if not telegram_token:
         logger.error("Telegram token not found in environment variables")
-        return False
-    
-    if not app_url:
-        logger.error("Webhook URL not found in environment variables")
         return False
     
     # Format the webhook URL

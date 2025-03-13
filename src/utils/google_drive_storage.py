@@ -10,7 +10,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
 
-from utils.error_handler import log_error
+from src.utils.error_handler import log_error
 
 # Configure logging
 logging.basicConfig(
@@ -210,3 +210,4 @@ class GoogleDriveStorage:
             logger.error(f"Failed to create folder: {str(e)}")
             log_error("google_drive_storage", f"Folder creation error: {str(e)}")
             raise
+
