@@ -4,6 +4,7 @@ import os
 import logging
 import datetime
 import io
+import json
 from typing import Dict, Any, Optional, BinaryIO
 
 # Import Google Drive API libraries if available
@@ -41,23 +42,38 @@ class GoogleDriveStorage:
 
         # Get credentials
         try:
-            # Try to use service account if available
-            credentials_path = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
-            if os.path.exists(credentials_path):
+            # Check for credentials file
+            credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+            
+            if credentials_path and os.path.exists(credentials_path):
+                # Use service account from file
                 self.credentials = service_account.Credentials.from_service_account_file(
                     credentials_path,
                     scopes=['https://www.googleapis.com/auth/drive']
                 )
                 self.service = build('drive', 'v3', credentials=self.credentials)
                 self.is_available = True
+                logger.info(f"Successfully initialized Google Drive storage with credentials file: {credentials_path}")
             else:
-                # Fallback to API key authentication (read-only)
-                api_key = os.environ.get("GOOGLE_API_KEY")
-                if api_key:
-                    self.service = build('drive', 'v3', developerKey=api_key)
-                    self.is_available = True
-                else:
-                    logger.warning("No Google Drive credentials or API key found. Using fallback storage.")
+                # Try to use embedded credentials (for Heroku)
+                try:
+                    # Check if the credentials are directly in the environment
+                    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+                    if creds_json:
+                        creds_info = json.loads(creds_json)
+                        self.credentials = service_account.Credentials.from_service_account_info(
+                            creds_info,
+                            scopes=['https://www.googleapis.com/auth/drive']
+                        )
+                        self.service = build('drive', 'v3', credentials=self.credentials)
+                        self.is_available = True
+                        logger.info("Successfully initialized Google Drive storage with credentials from environment")
+                    else:
+                        logger.warning("No Google Drive credentials found. Using fallback storage.")
+                        self.service = None
+                        self.is_available = False
+                except Exception as e:
+                    logger.error(f"Error loading credentials from environment: {str(e)}")
                     self.service = None
                     self.is_available = False
         except Exception as e:
@@ -104,9 +120,9 @@ class GoogleDriveStorage:
 
             # Upload the file
             file_id = self.upload_text_file(content, filename, type_folder_id, mime_type)
-
-            # Return the file ID
-            return file_id
+            
+            logger.info(f"Saved output to Google Drive with ID: {file_id}")
+            return f"google_drive:{file_id}"
 
         except Exception as e:
             logger.error(f"Failed to save AI output: {str(e)}")
