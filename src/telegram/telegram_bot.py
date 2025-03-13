@@ -95,8 +95,11 @@ class TelegramBotHandler:
             # Extract the result from the response
             result = response.get("result", "I couldn't process your request.")
             
+            # Clean up any internal process artifacts from the response
+            cleaned_result = self._clean_response(result)
+            
             # Send response back to user
-            update.message.reply_text(result)
+            update.message.reply_text(cleaned_result)
             
             # Log the interaction
             logger.info(f"Processed message from user {user_id}")
@@ -107,6 +110,31 @@ class TelegramBotHandler:
                 "Sorry, I encountered an error processing your request. "
                 "Please try again later."
             )
+    
+    def _clean_response(self, response: str) -> str:
+        """Clean up internal processing artifacts from responses."""
+        # Check for common artifact patterns
+        if "Process the following user request:" in response:
+            # Try to extract just the final answer
+            try:
+                # Check if this is a mock response with feedback cycle artifacts
+                if response.startswith("This is a mock response to:"):
+                    # For mock responses, return a better formatted response
+                    return "I'm currently running in mock mode due to API limitations. Here's what I found about your request:\n\n" + \
+                           response.split("Process the following user request:")[1].split("\n")[0].strip()
+                
+                # For regular feedback cycles, try to extract the real content
+                if "Original query:" in response and "Feedback:" in response:
+                    lines = response.split("\n")
+                    # Try to find a line that doesn't contain typical artifacts
+                    for line in lines:
+                        if line and not any(term in line for term in ["Original query:", "Feedback:", "Please improve", "ORIGINAL", "FEEDBACK"]):
+                            return line.strip()
+            except Exception:
+                # If extraction fails, fallback to original response
+                pass
+        
+        return response
             
     def error_handler(self, update: Update, context: CallbackContext):
         """Handle errors in the Telegram bot."""
