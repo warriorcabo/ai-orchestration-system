@@ -1,4 +1,4 @@
-﻿# Fix for ChatGPT connector
+﻿# Fix for ChatGPT connector execute_task method
 import os
 import logging
 import openai
@@ -59,11 +59,12 @@ class ChatGPTConnector:
             # Add user prompt
             messages.append({"role": "user", "content": prompt})
             
-            # Make API call
+            # Make API call - remove proxies parameter if it exists
+            safe_params = {k: v for k, v in self.default_params.items() if k != 'proxies'}
             response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=messages,
-                **{k: v for k, v in self.default_params.items() if k != 'proxies'}
+                **safe_params
             )
             
             # Extract and return the response text
@@ -76,8 +77,11 @@ class ChatGPTConnector:
             logger.error(f"Error using OpenAI API: {str(e)}")
             return f"ChatGPT Error: {str(e)}"
             
-    def execute_task(self, task_spec, original_query):
-        """Execute a specified task based on Gemini's task specification"""
+    def execute_task(self, task_spec, original_query=None):
+        """Execute a specified task based on task specification"""
+        if original_query is None:
+            original_query = "Unknown query"
+            
         try:
             system_message = """
             You are an AI assistant specialized in executing tasks with precision and attention to detail.
