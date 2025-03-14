@@ -1,5 +1,6 @@
-﻿# Fix for AI Orchestrator to handle string responses from AI services
-import logging\nimport os
+﻿# orchestrator.py
+import logging
+import os
 import json
 import time
 import datetime
@@ -22,6 +23,7 @@ class AIOrchestrator:
     def __init__(self):
         """Initialize the orchestrator and its connections"""
         # Initialize AI service connectors
+        logger.info("Initializing AI Orchestrator")
         self.gemini = GeminiConnector()
         self.chatgpt = ChatGPTConnector()
 
@@ -33,8 +35,6 @@ class AIOrchestrator:
 
         # Maximum feedback loops
         self.max_feedback_loops = 2
-        
-        logger.info("AI Orchestrator initialized successfully")
 
     def get_or_create_session(self, user_id: str) -> Dict[str, Any]:
         """Get existing session or create a new one"""
@@ -259,4 +259,3 @@ class AIOrchestrator:
         random_str = ''.join(random.choices(string.hexdigits.lower(), k=8))
         
         return f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{random_str}"
-
