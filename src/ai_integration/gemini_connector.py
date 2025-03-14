@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 import google.generativeai as genai
 from google.api_core import exceptions
 
-from src.utils.error_handler import log_error
+from utils.error_handler import log_error
 
 # Configure logging
 logging.basicConfig(
@@ -24,27 +24,25 @@ class GeminiConnector:
         # Get API key from environment variables
         self.api_key = os.environ.get("GEMINI_API_KEY", "AIzaSyBMqCx4unKooOx4FoiEHxMyx8Dmfr-gkw0")
 
-        # Configure the Gemini API
         # Configure the Gemini API with explicit API key
-if not self.api_key:
-    logger.error("Gemini API key not found in environment variables")
-    raise ValueError("Gemini API key is required. Set GEMINI_API_KEY environment variable.")
-    
-# Configure with explicit API key
-genai.configure(api_key=self.api_key)
-logger.info("Gemini API configured with provided API key")
+        if not self.api_key:
+            logger.error("Gemini API key not found in environment variables")
+            raise ValueError("Gemini API key is required. Set GEMINI_API_KEY environment variable.")
+        
+        # Configure with explicit API key
+        genai.configure(api_key=self.api_key)
+        logger.info("Gemini API configured with provided API key")
 
         # Default model to use
-        self.model_name = "gemini-1.5-pro"
+        self.model_name = "gemini-pro"
 
-        # Prepare the model for generation
         # Initialize the model with proper configuration
-try:
-    self.model = genai.GenerativeModel(self.model_name)
-    logger.info(f"Gemini model {self.model_name} initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize Gemini model: {str(e)}")
-    raise
+        try:
+            self.model = genai.GenerativeModel(self.model_name)
+            logger.info(f"Gemini model {self.model_name} initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Gemini model: {str(e)}")
+            raise
 
         # Default generation config
         self.generation_config = {
@@ -73,7 +71,6 @@ except Exception as e:
                 "threshold": "BLOCK_MEDIUM_AND_ABOVE"
             }
         ]
-
     def generate_response(self, prompt: str, role: str = "task_generator") -> str:
         """Generate a response from Gemini based on the prompt and role"""
         try:
@@ -184,8 +181,3 @@ except Exception as e:
         """Get a rough estimate of tokens in the prompt"""
         # Simple approximation: ~4 characters per token
         return len(prompt) // 4
-
-
-
-
-
