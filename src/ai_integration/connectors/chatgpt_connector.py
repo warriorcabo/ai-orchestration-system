@@ -19,23 +19,18 @@ class ChatGPTConnector:
             self.is_available = False
             return
             
-        # Initialize OpenAI client
-        self.client = openai.OpenAI(api_key=self.api_key)
-        
-        # Default model to use
-        self.model = "gpt-4-turbo-preview"
-        
-        # Default parameters
-        self.default_params = {
-            "temperature": 0.7,
-            "max_tokens": 2048,
-            "top_p": 1.0,
-            "frequency_penalty": 0,
-            "presence_penalty": 0
-        }
-        
-        self.is_available = True
-        logger.info("ChatGPT connector initialized successfully")
+        try:
+            # Initialize OpenAI client - without any extra args
+            self.client = openai.OpenAI(api_key=self.api_key)
+            
+            # Default model to use
+            self.model = "gpt-4-turbo-preview"
+            
+            self.is_available = True
+            logger.info("ChatGPT connector initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenAI client: {str(e)}")
+            self.is_available = False
 
     def generate_response(self, prompt, system_message=None):
         """Generate a response from ChatGPT based on the prompt"""
@@ -63,11 +58,11 @@ class ChatGPTConnector:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=self.default_params["temperature"],
-                max_tokens=self.default_params["max_tokens"],
-                top_p=self.default_params["top_p"],
-                frequency_penalty=self.default_params["frequency_penalty"],
-                presence_penalty=self.default_params["presence_penalty"]
+                temperature=0.7,
+                max_tokens=2048,
+                top_p=1.0,
+                frequency_penalty=0,
+                presence_penalty=0
             )
             
             # Extract and return the response text
