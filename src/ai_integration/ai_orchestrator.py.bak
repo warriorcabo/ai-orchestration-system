@@ -1,0 +1,96 @@
+﻿# src/ai_integration/ai_orchestrator.py
+import os
+import json
+import logging
+import time
+from typing import Dict, Any, List, Optional
+
+# Configure logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+class AIOrchestrator:
+    """Central orchestrator for managing AI service communication"""
+
+    def __init__(self):
+        """Initialize the orchestrator and its connections"""
+        # Initialize with mock connectors for now
+        self.gemini = self._create_mock_gemini_connector()
+        self.chatgpt = self._create_mock_chatgpt_connector()
+
+        # User session storage
+        self.user_sessions: Dict[str, Dict[str, Any]] = {}
+
+        # Maximum retries for API calls
+        self.max_retries = 3
+
+        # Maximum feedback loops
+        self.max_feedback_loops = 2
+        
+        logger.info("AI Orchestrator initialized")
+
+    def get_or_create_session(self, user_id: str) -> Dict[str, Any]:
+        """Get existing session or create a new one"""
+        if user_id not in self.user_sessions:
+            self.user_sessions[user_id] = {
+                "history": [],
+                "last_interaction": time.time(),
+                "feedback_count": 0
+            }
+        return self.user_sessions[user_id]
+
+    def process_message(self, user_id: str, message: str) -> str:
+        """Process an incoming message and determine routing strategy"""
+        try:
+            # Get or create user session
+            session = self.get_or_create_session(user_id)
+
+            # Update last interaction time
+            session["last_interaction"] = time.time()
+
+            # Add user message to history
+            session["history"].append({"role": "user", "content": message})
+
+            # For now, just use a mock response
+            response = f"AI Orchestrator received: '{message}'\n\n"
+            response += "This is a mock response from the orchestrator. In production, this would:\n"
+            response += "1. Route the request to Gemini for task generation\n"
+            response += "2. Execute the task with ChatGPT\n"
+            response += "3. Review the result with Gemini if needed\n"
+            response += "4. Store the final response in Google Drive"
+
+            # Add response to history
+            session["history"].append({"role": "assistant", "content": response})
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error processing message: {str(e)}")
+            return f"Error in AI Orchestrator: {str(e)}"
+
+    def _create_mock_gemini_connector(self):
+        """Create a mock Gemini connector for testing"""
+        return MockGeminiConnector()
+
+    def _create_mock_chatgpt_connector(self):
+        """Create a mock ChatGPT connector for testing"""
+        return MockChatGPTConnector()
+
+
+class MockGeminiConnector:
+    """Mock connector for Gemini API"""
+    
+    def generate_response(self, prompt: str) -> str:
+        """Generate a mock response"""
+        return f"[Gemini Mock] Response to: {prompt[:50]}..."
+
+
+class MockChatGPTConnector:
+    """Mock connector for ChatGPT API"""
+    
+    def generate_response(self, prompt: str) -> str:
+        """Generate a mock response"""
+        return f"[ChatGPT Mock] Response to: {prompt[:50]}..."

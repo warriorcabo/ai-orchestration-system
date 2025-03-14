@@ -1,0 +1,159 @@
+{
+  "timestamp": "20250313_162113",
+  "config": {
+    "total_requests": 20,
+    "concurrent_requests": 5,
+    "delay_between_batches": 2
+  },
+  "results": [
+    {
+      "query_id": "20250313_162113_0",
+      "status": "success",
+      "elapsed_time": 3.1903085708618164,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_1",
+      "status": "success",
+      "elapsed_time": 4.35443377494812,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_3",
+      "status": "success",
+      "elapsed_time": 8.05942678451538,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_4",
+      "status": "success",
+      "elapsed_time": 9.65727162361145,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_2",
+      "status": "success",
+      "elapsed_time": 9.700141668319702,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_8",
+      "status": "success",
+      "elapsed_time": 3.425623655319214,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_6",
+      "status": "success",
+      "elapsed_time": 4.282407283782959,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_5",
+      "status": "success",
+      "elapsed_time": 7.266719341278076,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_7",
+      "status": "success",
+      "elapsed_time": 8.243515729904175,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_9",
+      "status": "success",
+      "elapsed_time": 9.312706708908081,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_10",
+      "status": "success",
+      "elapsed_time": 3.8305506706237793,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_13",
+      "status": "success",
+      "elapsed_time": 7.008062839508057,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_14",
+      "status": "success",
+      "elapsed_time": 8.74667239189148,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_12",
+      "status": "success",
+      "elapsed_time": 8.752617359161377,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_11",
+      "status": "success",
+      "elapsed_time": 9.717222213745117,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_16",
+      "status": "success",
+      "elapsed_time": 4.452009201049805,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_18",
+      "status": "success",
+      "elapsed_time": 6.431045293807983,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_15",
+      "status": "success",
+      "elapsed_time": 6.432654619216919,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_17",
+      "status": "success",
+      "elapsed_time": 7.789363622665405,
+      "status_code": 200,
+      "response_size": 184
+    },
+    {
+      "query_id": "20250313_162113_19",
+      "status": "success",
+      "elapsed_time": 10.100583553314209,
+      "status_code": 200,
+      "response_size": 184
+    }
+  ],
+  "summary": {
+    "total": 20,
+    "successful": 20,
+    "failed": 0,
+    "exceptions": 0,
+    "avg_response_time": 7.037666845321655,
+    "min_response_time": 3.1903085708618164,
+    "max_response_time": 10.100583553314209
+  }
+}

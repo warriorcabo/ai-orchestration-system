@@ -1,0 +1,159 @@
+{
+  "timestamp": "20250313_160756",
+  "config": {
+    "total_requests": 20,
+    "concurrent_requests": 5,
+    "delay_between_batches": 2
+  },
+  "results": [
+    {
+      "query_id": "20250313_160756_1",
+      "status": "error",
+      "elapsed_time": 12.51672077178955,
+      "status_code": 503,
+      "response": "<!DOCTYPE html>\n\t<html>\n\t  <head>\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale"
+    },
+    {
+      "query_id": "20250313_160756_3",
+      "status": "error",
+      "elapsed_time": 12.517632007598877,
+      "status_code": 503,
+      "response": "<!DOCTYPE html>\n\t<html>\n\t  <head>\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale"
+    },
+    {
+      "query_id": "20250313_160756_2",
+      "status": "error",
+      "elapsed_time": 12.518636226654053,
+      "status_code": 503,
+      "response": "<!DOCTYPE html>\n\t<html>\n\t  <head>\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale"
+    },
+    {
+      "query_id": "20250313_160756_0",
+      "status": "error",
+      "elapsed_time": 12.520259618759155,
+      "status_code": 503,
+      "response": "<!DOCTYPE html>\n\t<html>\n\t  <head>\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale"
+    },
+    {
+      "query_id": "20250313_160756_4",
+      "status": "error",
+      "elapsed_time": 12.519955158233643,
+      "status_code": 503,
+      "response": "<!DOCTYPE html>\n\t<html>\n\t  <head>\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale"
+    },
+    {
+      "query_id": "20250313_160756_5",
+      "status": "success",
+      "elapsed_time": 13.87588620185852,
+      "status_code": 200,
+      "response_size": 398
+    },
+    {
+      "query_id": "20250313_160756_7",
+      "status": "success",
+      "elapsed_time": 15.58251166343689,
+      "status_code": 200,
+      "response_size": 708
+    },
+    {
+      "query_id": "20250313_160756_8",
+      "status": "success",
+      "elapsed_time": 18.521209001541138,
+      "status_code": 200,
+      "response_size": 681
+    },
+    {
+      "query_id": "20250313_160756_6",
+      "status": "success",
+      "elapsed_time": 20.764803886413574,
+      "status_code": 200,
+      "response_size": 750
+    },
+    {
+      "query_id": "20250313_160756_9",
+      "status": "success",
+      "elapsed_time": 24.118179082870483,
+      "status_code": 200,
+      "response_size": 675
+    },
+    {
+      "query_id": "20250313_160756_10",
+      "status": "success",
+      "elapsed_time": 19.330393314361572,
+      "status_code": 200,
+      "response_size": 369
+    },
+    {
+      "query_id": "20250313_160756_11",
+      "status": "success",
+      "elapsed_time": 21.320122480392456,
+      "status_code": 200,
+      "response_size": 751
+    },
+    {
+      "query_id": "20250313_160756_13",
+      "status": "success",
+      "elapsed_time": 23.32521653175354,
+      "status_code": 200,
+      "response_size": 704
+    },
+    {
+      "query_id": "20250313_160756_14",
+      "status": "success",
+      "elapsed_time": 23.32711625099182,
+      "status_code": 200,
+      "response_size": 698
+    },
+    {
+      "query_id": "20250313_160756_12",
+      "status": "success",
+      "elapsed_time": 25.361705780029297,
+      "status_code": 200,
+      "response_size": 709
+    },
+    {
+      "query_id": "20250313_160756_16",
+      "status": "success",
+      "elapsed_time": 7.045581102371216,
+      "status_code": 200,
+      "response_size": 751
+    },
+    {
+      "query_id": "20250313_160756_15",
+      "status": "success",
+      "elapsed_time": 9.514818668365479,
+      "status_code": 200,
+      "response_size": 347
+    },
+    {
+      "query_id": "20250313_160756_18",
+      "status": "success",
+      "elapsed_time": 17.74707341194153,
+      "status_code": 200,
+      "response_size": 682
+    },
+    {
+      "query_id": "20250313_160756_19",
+      "status": "success",
+      "elapsed_time": 19.51744794845581,
+      "status_code": 200,
+      "response_size": 698
+    },
+    {
+      "query_id": "20250313_160756_17",
+      "status": "success",
+      "elapsed_time": 19.516483545303345,
+      "status_code": 200,
+      "response_size": 731
+    }
+  ],
+  "summary": {
+    "total": 20,
+    "successful": 15,
+    "failed": 5,
+    "exceptions": 0,
+    "avg_response_time": 17.073087632656097,
+    "min_response_time": 7.045581102371216,
+    "max_response_time": 25.361705780029297
+  }
+}

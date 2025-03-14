@@ -1,8 +1,7 @@
-﻿# app.py
+﻿# app.py - Main application entry point
 import os
 import logging
-import json
-from flask import Flask, request, jsonify
+import sys
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -11,64 +10,58 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 logger = logging.getLogger(__name__)
 
-# Import components
-from src.ai_integration.orchestrator import AIOrchestrator
-from src.utils.error_handler import log_error
+# Import modules
+from src.telegram.telegram_bot import TelegramBotHandler
+from src.ai_integration.ai_orchestrator import AIOrchestrator
+from utils.error_handler import ErrorHandler
 
-# Initialize Flask app
-app = Flask(__name__)
-
-# Initialize AI Orchestrator
-orchestrator = AIOrchestrator()
-
-@app.route('/api/process', methods=['POST'])
-def process_message():
-    """Process a message from the user"""
+def main():
+    """Main function to start the application"""
     try:
-        # Get request data
-        data = request.json
+        logger.info("Starting AI Orchestration System")
         
-        # Extract user_id and message
-        user_id = data.get('user_id', 'anonymous_user')
-        message = data.get('message', '')
+        # Initialize the error handler
+        error_handler = ErrorHandler()
         
-        logger.info(f"Processing request for user: {user_id}")
+        # Initialize the AI Orchestrator
+        try:
+            logger.info("Initializing AI Orchestrator...")
+            orchestrator = AIOrchestrator()
+            logger.info("AI Orchestrator initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize AI Orchestrator: {str(e)}")
+            error_handler.log_error("main", f"AI Orchestrator initialization error: {str(e)}")
+            return
         
-        # Process the message with the orchestrator
-        result = orchestrator.process_message(user_id, message)
-        
-        # Return the result
-        return jsonify({
-            "status": "success",
-            "response": result
-        })
-    except Exception as e:
-        logger.error(f"Failed to process request: {str(e)}")
-        log_error("app", f"Request processing error: {str(e)}")
-        return jsonify({
-            "status": "error",
-            "message": f"Failed to process request: {str(e)}"
-        }), 500
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "services": {
-            "orchestrator": hasattr(orchestrator, 'process_message'),
-            "gemini": hasattr(orchestrator, 'gemini') and hasattr(orchestrator.gemini, 'is_available'),
-            "chatgpt": hasattr(orchestrator, 'chatgpt') and hasattr(orchestrator.chatgpt, 'is_available')
-        }
-    })
-
-if __name__ == '__main__':
-    # Get port from environment variable
-    port = int(os.environ.get("PORT", 5000))
+        # Initialize and start the Telegram bot
+        try:
+            telegram_token = os.environ.get("TELEGRAM_TOKEN", "8183769729:AAEXc0x1BizumecFeTVkEzQ75GjXesTKM24")
+            webhook_url = os.environ.get("WEBHOOK_URL", None)
+            
+            logger.info("Initializing Telegram bot...")
+            bot = TelegramBotHandler(telegram_token, orchestrator)
+            logger.info("Starting Telegram bot...")
+            bot.start(webhook_url)
+            
+            logger.info("AI Orchestration System started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start Telegram bot: {str(e)}")
+            error_handler.log_error("main", f"Telegram bot startup error: {str(e)}")
     
-    # Start the Flask app
-    app.run(host="0.0.0.0", port=port)
+    except Exception as e:
+        logger.error(f"Failed to start application: {str(e)}")
+        if 'error_handler' in locals():
+            error_handler.log_error("main", f"Startup error: {str(e)}")
+        else:
+            logging.error(f"Error handler not initialized. Error: {str(e)}")
+
+if __name__ == "__main__":
+    main()

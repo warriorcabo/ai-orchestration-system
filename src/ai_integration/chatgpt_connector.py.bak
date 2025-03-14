@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 import openai
 from openai import OpenAI
 
-from utils.error_handler import log_error
+from src.utils.error_handler import log_error
 
 # Configure logging
 logging.basicConfig(
@@ -26,13 +26,8 @@ class ChatGPTConnector:
         if not self.api_key:
             logger.warning("OpenAI API key not found in environment variables")
 
-        # Initialize the OpenAI client
-        try:
-            self.client = OpenAI(api_key=self.api_key)
-            logger.info("OpenAI client initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {str(e)}")
-            raise
+        # Initialize the OpenAI client - simplified initialization to avoid proxies parameter
+        self.client = OpenAI(api_key=self.api_key)
 
         # Default model to use
         self.model = "gpt-4-turbo"
@@ -65,34 +60,24 @@ class ChatGPTConnector:
             # Add user prompt
             messages.append({"role": "user", "content": prompt})
 
-            # Make API call with updated OpenAI SDK
+            # Make API call
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=self.default_params.get("temperature", 0.7),
-                max_tokens=self.default_params.get("max_tokens", 2048),
-                top_p=self.default_params.get("top_p", 1.0),
-                frequency_penalty=self.default_params.get("frequency_penalty", 0),
-                presence_penalty=self.default_params.get("presence_penalty", 0)
+                temperature=self.default_params["temperature"],
+                max_tokens=self.default_params["max_tokens"],
+                top_p=self.default_params["top_p"],
+                frequency_penalty=self.default_params["frequency_penalty"],
+                presence_penalty=self.default_params["presence_penalty"]
             )
-            
+
             # Extract and return the response text
             if response.choices and len(response.choices) > 0:
                 return response.choices[0].message.content
-                
-            return "No response generated"
-            
-        except openai.RateLimitError as e:
-            logger.error(f"OpenAI API rate limit exceeded: {str(e)}")
-            log_error("chatgpt_integration", f"Rate limit exceeded: {str(e)}")
-            raise
 
-        except openai.APIError as e:
-            logger.error(f"OpenAI API error: {str(e)}")
-            log_error("chatgpt_integration", f"API error: {str(e)}")
-            raise
+            return "No response generated"
 
         except Exception as e:
-            logger.error(f"Unexpected error in ChatGPT connector: {str(e)}")
-            log_error("chatgpt_integration", f"Unexpected error: {str(e)}")
+            logger.error(f"OpenAI API error: {str(e)}")
+            log_error("chatgpt_connector", f"API error: {str(e)}")
             raise
