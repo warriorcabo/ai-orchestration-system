@@ -1,4 +1,4 @@
-﻿# Fix for ChatGPT connector execute_task method
+﻿# chatgpt_connector.py
 import os
 import logging
 import openai
@@ -19,11 +19,11 @@ class ChatGPTConnector:
             self.is_available = False
             return
             
-        # Set API key
-        openai.api_key = self.api_key
+        # Initialize OpenAI client
+        self.client = openai.OpenAI(api_key=self.api_key)
         
         # Default model to use
-        self.model = "gpt-4-0125-preview"
+        self.model = "gpt-4-turbo-preview"
         
         # Default parameters
         self.default_params = {
@@ -59,12 +59,15 @@ class ChatGPTConnector:
             # Add user prompt
             messages.append({"role": "user", "content": prompt})
             
-            # Make API call - remove proxies parameter if it exists
-            safe_params = {k: v for k, v in self.default_params.items() if k != 'proxies'}
-            response = openai.ChatCompletion.create(
+            # Make API call using new client API
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                **safe_params
+                temperature=self.default_params["temperature"],
+                max_tokens=self.default_params["max_tokens"],
+                top_p=self.default_params["top_p"],
+                frequency_penalty=self.default_params["frequency_penalty"],
+                presence_penalty=self.default_params["presence_penalty"]
             )
             
             # Extract and return the response text
