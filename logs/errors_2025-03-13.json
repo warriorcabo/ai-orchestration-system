@@ -1,0 +1,1 @@
+{"timestamp": "2025-03-13T15:29:55.852137", "module": "google_drive_storage", "message": "Init error: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)", "severity": "ERROR", "category": "UNKNOWN", "traceback": null, "metadata": {}}

@@ -1,0 +1,1 @@
+{"timestamp": "2025-03-12T14:25:26.563702", "module": "test_module", "message": "This is a test error", "severity": "INFO", "category": "UNKNOWN", "traceback": null, "metadata": {}}
