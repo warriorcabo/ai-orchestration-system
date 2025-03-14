@@ -1,10 +1,20 @@
-﻿# Python-specific
+﻿# Ignore sensitive files
+*credentials*.json
+*.key
+*.pem
+.env
+*.log
+credentials/
+
+# Ignore backup files
+*.bak
+
+# Ignore Python cache files
 __pycache__/
 *.py[cod]
 *.class
 *.so
 .Python
-venv/
 env/
 build/
 develop-eggs/
@@ -20,22 +30,3 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# API Keys and sensitive information
-.env
-credentials.json
-token.json
-
-# Logs
-logs/
-*.log
-
-# System-specific files
-.DS_Store
-Thumbs.db
-
-# Editor-specific
-.idea/
-.vscode/
-*.swp
-*.swo
